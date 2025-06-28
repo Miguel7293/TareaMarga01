@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Eliminar Producto</h2>
+    <form method="POST" action="{{ url_for('eliminar_producto') }}">
+        <div class="form-group">
+            <label for="producto_id">ID del Producto a Eliminar:</label>
+            <input type="number" class="form-control" id="producto_id" name="producto_id" required>
+        </div>
+        <button type="submit" class="btn btn-danger">Eliminar Producto</button>
+    </form>
+
+    {% if mensaje %}
+    <div class="alert alert-info mt-3">
+        {{ mensaje }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

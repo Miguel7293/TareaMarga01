@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Registrar Nueva Venta</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Datos de la Venta</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('nueva_venta') }}" id="form-venta">
+                <!-- Campo para búsqueda rápida -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text">Buscar producto:</span>
+                            <input type="text" id="buscar-producto" class="form-control" placeholder="Ingrese código o nombre">
+                            <button class="btn btn-outline-secondary" type="button" id="btn-buscar">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text">Total de productos:</span>
+                            <input type="number" class="form-control" id="total-productos" value="1" min="1" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de productos -->
+                <div id="productos-container">
+                    <div class="producto-item row mb-3 align-items-center">
+                        <div class="col-md-5">
+                            <label class="form-label">Producto</label>
+                            <select class="form-control producto-select" name="producto_1_codigo" required>
+                                <option value="">Seleccione un producto</option>
+                                {% for producto in productos %}
+                                <option value="{{ producto[0] }}" 
+                                        data-precio="{{ producto[2] }}" 
+                                        data-stock="{{ producto[3] }}">
+                                    {{ producto[0] }} - {{ producto[1] }} (S/ {{ producto[2] }} | Stock: {{ producto[3] }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" class="form-control cantidad" name="producto_1_cantidad" min="1" value="1" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Subtotal</label>
+                            <input type="text" class="form-control subtotal" name="producto_1_subtotal" value="0.00" readonly>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger btn-eliminar" style="display: none;">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total de la venta -->
+                <div class="row mt-4">
+                    <div class="col-md-8"></div>
+                    <div class="col-md-4">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-light">Total de la venta:</span>
+                            <input type="text" class="form-control fs-4 fw-bold text-success" id="total-venta" value="S/ 0.00" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" id="btn-agregar-producto" class="btn btn-secondary">
+                        <i class="bi bi-plus-circle"></i> Agregar otro producto
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Registrar Venta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mt-3">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contenedor = document.getElementById('productos-container');
+    const btnAgregar = document.getElementById('btn-agregar-producto');
+    const buscarProducto = document.getElementById('buscar-producto');
+    const btnBuscar = document.getElementById('btn-buscar');
+    const totalProductos = document.getElementById('total-productos');
+    const totalVenta = document.getElementById('total-venta');
+    let contador = 1;
+
+    // Función para calcular subtotales y total
+    function calcularTotales() {
+        let total = 0;
+        document.querySelectorAll('.producto-item').forEach(item => {
+            const select = item.querySelector('.producto-select');
+            const cantidadInput = item.querySelector('.cantidad');
+            const subtotalInput = item.querySelector('.subtotal');
+            
+            if (select.value) {
+                const precio = parseFloat(select.options[select.selectedIndex].dataset.precio);
+                const cantidad = parseInt(cantidadInput.value) || 0;
+                const subtotal = precio * cantidad;
+                
+                subtotalInput.value = subtotal.toFixed(2);
+                total += subtotal;
+            } else {
+                subtotalInput.value = "0.00";
+            }
+        });
+        
+        totalVenta.value = `S/ ${total.toFixed(2)}`;
+        totalProductos.value = document.querySelectorAll('.producto-item').length;
+    }
+
+    // Evento para agregar producto
+    btnAgregar.addEventListener('click', function() {
+        contador++;
+        const nuevoProducto = document.querySelector('.producto-item').cloneNode(true);
+        
+        // Actualizar nombres y limpiar valores
+        nuevoProducto.querySelectorAll('select, input').forEach(el => {
+            if (el.name) {
+                el.name = el.name.replace('_1_', `_${contador}_`);
+            }
+            if (el.classList.contains('cantidad')) {
+                el.value = '1';
+            } else if (el.classList.contains('subtotal')) {
+                el.value = '0.00';
+            } else if (el.classList.contains('producto-select')) {
+                el.value = '';
+            }
+        });
+        
+        // Mostrar botón eliminar
+        nuevoProducto.querySelector('.btn-eliminar').style.display = 'block';
+        contenedor.appendChild(nuevoProducto);
+        
+        // Actualizar contador
+        calcularTotales();
+    });
+
+    // Evento para eliminar producto
+    contenedor.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-eliminar') || 
+            e.target.parentElement.classList.contains('btn-eliminar')) {
+            const item = e.target.closest('.producto-item');
+            if (document.querySelectorAll('.producto-item').length > 1) {
+                item.remove();
+                calcularTotales();
+            }
+        }
+    });
+
+    // Eventos para cambios en cantidad o producto seleccionado
+    contenedor.addEventListener('change', function(e) {
+        if (e.target.classList.contains('producto-select') || 
+            e.target.classList.contains('cantidad')) {
+            calcularTotales();
+            
+            // Validar stock
+            if (e.target.classList.contains('cantidad')) {
+                const item = e.target.closest('.producto-item');
+                const select = item.querySelector('.producto-select');
+                if (select.value) {
+                    const stock = parseInt(select.options[select.selectedIndex].dataset.stock);
+                    const cantidad = parseInt(e.target.value) || 0;
+                    
+                    if (cantidad > stock) {
+                        alert(`No hay suficiente stock. Stock disponible: ${stock}`);
+                        e.target.value = stock;
+                        calcularTotales();
+                    }
+                }
+            }
+        }
+    });
+
+    // Función para buscar producto
+    btnBuscar.addEventListener('click', function() {
+        const busqueda = buscarProducto.value.toLowerCase();
+        if (!busqueda) return;
+        
+        let encontrado = false;
+        document.querySelectorAll('.producto-select option').forEach(option => {
+            if (option.value && 
+                (option.text.toLowerCase().includes(busqueda) || 
+                 option.value.toLowerCase().includes(busqueda))) {
+                option.selected = true;
+                encontrado = true;
+                // Desplazarse al primer producto disponible
+                const select = option.closest('select');
+                select.dispatchEvent(new Event('change'));
+                select.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+        
+        if (!encontrado) {
+            alert("Producto no encontrado");
+        }
+    });
+
+    // Permitir buscar con Enter
+    buscarProducto.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            btnBuscar.click();
+        }
+    });
+
+    // Inicializar cálculos
+    calcularTotales();
+});
+</script>
+
+<style>
+.producto-item {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+.subtotal {
+    font-weight: bold;
+}
+#total-venta {
+    text-align: right;
+}
+</style>
+{% endblock %}

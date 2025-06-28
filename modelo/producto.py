@@ -86,11 +86,15 @@ class Producto:
     @staticmethod
     def listar_productos():
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT codigo, nombre, categoria, precio, stock FROM productos')
-        productos = cursor.fetchall()
-        conn.close()
-        return productos
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT codigo, nombre, categoria, precio, stock FROM productos')
+            return cursor.fetchall()  # Retorna lista de tuplas
+        except Exception as e:
+            print(f"Error de DB: {e}")
+            return []
+        finally:
+            conn.close()
 
     @staticmethod
     def actualizar_stock(codigo, cantidad):

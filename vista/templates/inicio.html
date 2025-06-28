@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Menú Principal</h2>
+<div class="menu-options">
+    <a href="{{ url_for('nueva_venta') }}" class="btn">1. Nueva Venta</a>
+    <a href="{{ url_for('listar_productos') }}" class="btn">2. Listar Productos</a>
+    <a href="{{ url_for('registrar_producto') }}" class="btn">3. Registrar Producto</a>
+    <a href="{{ url_for('eliminar_producto') }}" class="btn btn-danger">4. Eliminar Producto</a>
+    <a href="{{ url_for('historial_ventas') }}" class="btn">5. Historial Ventas</a>
+</div>
+{% endblock %}
